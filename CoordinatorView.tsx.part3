@@ -1,0 +1,120 @@
+      {activeTab === 'generator' && (
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="border-indigo-100 shadow-sm">
+            <CardHeader className="bg-indigo-50/50 border-b border-indigo-100 pb-4">
+              <CardTitle className="text-indigo-900 flex items-center">
+                <Wand2 className="w-5 h-5 mr-2 text-indigo-600" />
+                AI Timetable Generation
+              </CardTitle>
+              <CardDescription>
+                Generate a conflict-free master timetable based on constraints.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center p-3 border rounded-lg bg-slate-50">
+                  <div className="flex items-center">
+                    <Database className="w-4 h-4 mr-2 text-slate-500" />
+                    <span className="text-sm font-medium">Faculty Constraints</span>
+                  </div>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    {setupData ? setupData.faculty.length : 0} Loaded
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center p-3 border rounded-lg bg-slate-50">
+                  <div className="flex items-center">
+                    <Database className="w-4 h-4 mr-2 text-slate-500" />
+                    <span className="text-sm font-medium">Room Capacities</span>
+                  </div>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    {setupData ? setupData.rooms.length : 0} Loaded
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center p-3 border rounded-lg bg-slate-50">
+                  <div className="flex items-center">
+                    <Database className="w-4 h-4 mr-2 text-slate-500" />
+                    <span className="text-sm font-medium">Subject Credits</span>
+                  </div>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    {setupData ? setupData.courses.length : 0} Loaded
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center p-3 border rounded-lg bg-slate-50">
+                  <div className="flex items-center">
+                    <UserCheck className="w-4 h-4 mr-2 text-slate-500" />
+                    <span className="text-sm font-medium">Student Cohorts & Divisions</span>
+                  </div>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    {setupData && setupData.batches ? setupData.batches.length : 0} Loaded
+                  </Badge>
+                </div>
+                
+                <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg flex gap-3 mt-4">
+                  <Info className="w-5 h-5 text-blue-600 shrink-0" />
+                  <div className="text-sm text-blue-900">
+                    <strong>Clash-Free Generation Enabled:</strong> The algorithm will automatically read your loaded batch sizes (e.g., 1000 CS students) and section divisions to ensure no student groups or faculty are double-booked.
+                  </div>
+                </div>
+                
+                <Button 
+                  className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white" 
+                  size="lg"
+                  onClick={simulateGeneration}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? (
+                    <>
+                      <Clock className="w-4 h-4 mr-2 animate-spin" />
+                      Computing Combinations...
+                    </>
+                  ) : (
+                    <>
+                      <Settings className="w-4 h-4 mr-2" />
+                      Run Genetic Algorithm
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Generation Settings</CardTitle>
+              <CardDescription>Adjust optimization weights.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium text-slate-700">Minimize Student Gaps</span>
+                  <span className="text-sm text-slate-500">80%</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full">
+                  <div className="bg-slate-900 h-2 rounded-full" style={{ width: '80%' }}></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium text-slate-700">Faculty Consecutive Limits</span>
+                  <span className="text-sm text-slate-500">Max 2</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full">
+                  <div className="bg-slate-900 h-2 rounded-full" style={{ width: '60%' }}></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium text-slate-700">Room Travel Distance</span>
+                  <span className="text-sm text-slate-500">Low Priority</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full">
+                  <div className="bg-slate-900 h-2 rounded-full" style={{ width: '30%' }}></div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}

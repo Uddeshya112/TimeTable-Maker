@@ -1,0 +1,245 @@
+      {activeTab === 'setup' && setupData && (
+        <div className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {/* Rooms Setup */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3 border-b">
+                <CardTitle className="text-lg">Rooms</CardTitle>
+                <CardDescription>Define physical spaces and capacities.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                  {setupData.rooms.map((r: any) => (
+                    <div key={r.id} className="group flex justify-between items-center bg-slate-50 p-2 rounded border text-sm hover:bg-slate-100 transition-colors">
+                      <div>
+                        <span className="font-medium">{r.name}</span>
+                        <span className="text-slate-500 text-xs ml-2 bg-slate-200 px-2 py-0.5 rounded-full">{r.capacity} seats</span>
+                        {r.type && <span className="text-slate-500 text-xs ml-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{r.type}</span>}
+                      </div>
+                      <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => startEdit('room', r)} className="p-1 text-blue-600 hover:text-blue-800"><Edit2 className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => handleDeleteSetup('room', r.id)} className="p-1 text-red-600 hover:text-red-800"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-2 border-t pt-4">
+                  <h4 className="text-sm font-semibold text-slate-700">{editRoomId ? "Edit Room" : "Add New Room"}</h4>
+                  <input type="text" placeholder="Room Name (e.g. 101)" className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm" value={newRoom.name} onChange={e => setNewRoom({...newRoom, name: e.target.value})} />
+                  <div className="flex gap-2">
+                    <input type="number" placeholder="Capacity" className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm" value={newRoom.capacity} onChange={e => setNewRoom({...newRoom, capacity: e.target.value})} />
+                    <select className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm" value={newRoom.type} onChange={e => setNewRoom({...newRoom, type: e.target.value})}>
+                      <option value="Lecture">Lecture</option>
+                      <option value="Laboratory">Laboratory</option>
+                    </select>
+                  </div>
+                  {editRoomId ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" className="flex-1 bg-slate-900 hover:bg-slate-800" onClick={() => handleUpdateSetup('room', editRoomId, newRoom)} disabled={!newRoom.name || !newRoom.capacity}>Update</Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => cancelEdit('room')}>Cancel</Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" className="w-full bg-slate-900 hover:bg-slate-800" onClick={() => handleAddSetup('room', newRoom)} disabled={!newRoom.name || !newRoom.capacity}>Add Room</Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Courses Setup */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3 border-b">
+                <CardTitle className="text-lg">Subjects</CardTitle>
+                <CardDescription>Configure course requirements.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                  {setupData.courses.map((c: any) => (
+                    <div key={c.id} className="group flex justify-between items-center bg-slate-50 p-2 rounded border text-sm hover:bg-slate-100 transition-colors">
+                      <div>
+                        <span className="font-medium block">{c.name}</span>
+                        <span className="text-slate-500 text-xs bg-slate-200 px-2 py-0.5 rounded-full">{c.hours} hrs/week</span>
+                        {c.type && <span className="text-slate-500 text-xs ml-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{c.type}</span>}
+                      </div>
+                      <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => startEdit('course', c)} className="p-1 text-blue-600 hover:text-blue-800"><Edit2 className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => handleDeleteSetup('course', c.id)} className="p-1 text-red-600 hover:text-red-800"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-2 border-t pt-4">
+                  <h4 className="text-sm font-semibold text-slate-700">{editCourseId ? "Edit Subject" : "Add Subject"}</h4>
+                  <input type="text" placeholder="Subject Name" className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm" value={newCourse.name} onChange={e => setNewCourse({...newCourse, name: e.target.value})} />
+                  <div className="flex gap-2">
+                    <input type="number" placeholder="Hours/Week" className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm" value={newCourse.hours} onChange={e => setNewCourse({...newCourse, hours: e.target.value})} />
+                    <select className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm" value={newCourse.type} onChange={e => setNewCourse({...newCourse, type: e.target.value})}>
+                      <option value="Lecture">Lecture</option>
+                      <option value="Laboratory">Laboratory</option>
+                    </select>
+                  </div>
+                  {editCourseId ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" className="flex-1 bg-slate-900 hover:bg-slate-800" onClick={() => handleUpdateSetup('course', editCourseId, newCourse)} disabled={!newCourse.name || !newCourse.hours}>Update</Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => cancelEdit('course')}>Cancel</Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" className="w-full bg-slate-900 hover:bg-slate-800" onClick={() => handleAddSetup('course', newCourse)} disabled={!newCourse.name || !newCourse.hours}>Add Subject</Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Faculty Setup */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3 border-b">
+                <CardTitle className="text-lg">Faculty</CardTitle>
+                <CardDescription>Manage teachers and subject assignments.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                  {setupData.faculty.map((f: any) => (
+                    <div key={f.id} className="group flex justify-between items-center bg-slate-50 p-2 rounded border text-sm hover:bg-slate-100 transition-colors">
+                      <div>
+                        <span className="font-medium block">{f.name}</span>
+                        <span className="text-slate-500 text-xs">{f.department}</span>
+                        {f.subjects && f.subjects.length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {f.subjects.map((subId: string) => {
+                              const c = setupData.courses.find((c: any) => c.id === subId);
+                              return c ? <span key={subId} className="text-[10px] bg-blue-100 text-blue-700 px-1 rounded">{c.name}</span> : null;
+                            })}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => startEdit('faculty', f)} className="p-1 text-blue-600 hover:text-blue-800"><Edit2 className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => handleDeleteSetup('faculty', f.id)} className="p-1 text-red-600 hover:text-red-800"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-2 border-t pt-4">
+                  <h4 className="text-sm font-semibold text-slate-700">{editFacultyId ? "Edit Faculty" : "Add Faculty"}</h4>
+                  <input type="text" placeholder="Name" className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm" value={newFaculty.name} onChange={e => setNewFaculty({...newFaculty, name: e.target.value})} />
+                  <input type="text" placeholder="Department" className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm" value={newFaculty.department} onChange={e => setNewFaculty({...newFaculty, department: e.target.value})} />
+                  
+                  {setupData.courses.length > 0 && (
+                    <div className="border rounded-md p-2 bg-slate-50 space-y-2 max-h-32 overflow-y-auto">
+                      <p className="text-xs font-medium text-slate-500">Qualified Subjects</p>
+                      <div className="space-y-1">
+                        {setupData.courses.map((c: any) => (
+                          <label key={c.id} className="flex items-center space-x-2 text-sm">
+                            <input 
+                              type="checkbox" 
+                              checked={newFaculty.subjects?.includes(c.id) || false}
+                              onChange={(e) => {
+                                const isChecked = e.target.checked;
+                                const currentSubjects = newFaculty.subjects || [];
+                                if (isChecked) {
+                                  setNewFaculty({...newFaculty, subjects: [...currentSubjects, c.id]});
+                                } else {
+                                  setNewFaculty({...newFaculty, subjects: currentSubjects.filter(id => id !== c.id)});
+                                }
+                              }}
+                            />
+                            <span>{c.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {editFacultyId ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" className="flex-1 bg-slate-900 hover:bg-slate-800" onClick={() => handleUpdateSetup('faculty', editFacultyId, newFaculty)} disabled={!newFaculty.name || !newFaculty.department}>Update</Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => cancelEdit('faculty')}>Cancel</Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" className="w-full bg-slate-900 hover:bg-slate-800" onClick={() => handleAddSetup('faculty', newFaculty)} disabled={!newFaculty.name || !newFaculty.department}>Add Faculty</Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Batches Setup */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3 border-b">
+                <CardTitle className="text-lg">Student Batches</CardTitle>
+                <CardDescription>Setup cohorts & divisions.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                  {setupData.batches.map((b: any) => (
+                    <div key={b.id} className="group flex justify-between items-center bg-slate-50 p-2 rounded border text-sm hover:bg-slate-100 transition-colors">
+                      <div>
+                        <span className="font-medium block">{b.groupNumber || b.department}</span>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="text-slate-500 text-xs bg-slate-200 px-2 py-0.5 rounded-full">{b.totalStudents} Students</span>
+                          <span className="text-indigo-600 text-xs bg-indigo-50 px-2 py-0.5 rounded-full">{b.subgroups || b.sections || 1} Sub-groups</span>
+                        </div>
+                        {b.subgroupNames && b.subgroupNames.length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {b.subgroupNames.map((n: string, i: number) => (
+                              <span key={i} className="text-[10px] bg-slate-200 text-slate-700 px-1 rounded">{n}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => startEdit('batch', b)} className="p-1 text-blue-600 hover:text-blue-800"><Edit2 className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => handleDeleteSetup('batch', b.id)} className="p-1 text-red-600 hover:text-red-800"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-2 border-t pt-4">
+                  <h4 className="text-sm font-semibold text-slate-700">{editBatchId ? "Edit Batch" : "Add Batch"}</h4>
+                  <div className="flex gap-2">
+                    <input type="text" placeholder="Group (e.g. 2C4)" className="w-1/3 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm" value={newBatch.groupNumber} onChange={e => setNewBatch({...newBatch, groupNumber: e.target.value})} />
+                    <input type="text" placeholder="Department" className="w-2/3 h-9 rounded-md border border-input bg-background px-3 py-1 text-sm" value={newBatch.department} onChange={e => setNewBatch({...newBatch, department: e.target.value})} />
+                  </div>
+                  <div className="flex gap-2">
+                    <input type="number" placeholder="Total Students" className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm" value={newBatch.totalStudents} onChange={e => setNewBatch({...newBatch, totalStudents: e.target.value})} />
+                    <input type="number" placeholder="Sub-groups (e.g. 4)" className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm" value={newBatch.subgroups || newBatch.sections || ''} onChange={e => {
+                      const val = e.target.value;
+                      const count = parseInt(val) || 0;
+                      const names = newBatch.subgroupNames || [];
+                      const newNames = Array.from({length: count}, (_, i) => names[i] || `${newBatch.groupNumber ? newBatch.groupNumber.toUpperCase() : 'SG'}-${i+1}`);
+                      setNewBatch({...newBatch, subgroups: val, subgroupNames: newNames});
+                    }} />
+                  </div>
+                  {(parseInt(newBatch.subgroups) > 0) && (
+                    <div className="border rounded-md p-2 bg-slate-50 space-y-2 max-h-32 overflow-y-auto">
+                      <p className="text-xs font-medium text-slate-500">Name Sub-groups</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {Array.from({length: parseInt(newBatch.subgroups)}).map((_, i) => (
+                          <input 
+                            key={i}
+                            type="text" 
+                            className="w-full h-8 rounded border border-input bg-background px-2 py-1 text-xs" 
+                            value={newBatch.subgroupNames?.[i] || ''}
+                            onChange={(e) => {
+                              const names = [...(newBatch.subgroupNames || [])];
+                              names[i] = e.target.value;
+                              setNewBatch({...newBatch, subgroupNames: names});
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {editBatchId ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" className="flex-1 bg-slate-900 hover:bg-slate-800" onClick={() => handleUpdateSetup('batch', editBatchId, newBatch)} disabled={!newBatch.department || !newBatch.totalStudents || !newBatch.subgroups}>Update</Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => cancelEdit('batch')}>Cancel</Button>
+                    </div>
+                  ) : (
+                    <Button size="sm" className="w-full bg-slate-900 hover:bg-slate-800" onClick={() => handleAddSetup('batch', newBatch)} disabled={!newBatch.department || !newBatch.totalStudents || !newBatch.subgroups}>Add Batch</Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+          </div>
+        </div>
+      )}
