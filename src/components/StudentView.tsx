@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/card";
 import { AlertCircle, Clock, CalendarRange } from "lucide-react";
 import { Badge } from "@/src/components/ui/badge";
+import { DEFAULT_STUDENT_DATA } from "@/src/lib/defaultData";
 import { Button } from "@/src/components/ui/button";
 
 interface StudentViewProps {
@@ -9,7 +10,7 @@ interface StudentViewProps {
 }
 
 export default function StudentView({ sectionId }: StudentViewProps) {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<any>(DEFAULT_STUDENT_DATA);
   const [activeTab, setActiveTab] = useState<'routine' | 'polls'>('routine');
 
   // Mock polling data based on PDF page 27
@@ -54,7 +55,7 @@ export default function StudentView({ sectionId }: StudentViewProps) {
     }));
   };
 
-  if (!data) return <div className="p-8 text-slate-500">Loading Student Dashboard...</div>;
+  if (!data) return null;
 
   const activeAlerts = data.routine.filter((s: any) => s.status === 'cancelled');
   const rescheduled = data.routine.filter((s: any) => s.status === 'rescheduled');

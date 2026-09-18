@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/card";
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
+import { DEFAULT_FACULTY_DATA } from "@/src/lib/defaultData";
 import { AlertCircle, CalendarRange, Clock, CheckCircle2, PieChart, CalendarX, Megaphone, Plus } from "lucide-react";
 
 interface FacultyViewProps {
@@ -9,7 +10,7 @@ interface FacultyViewProps {
 }
 
 export default function FacultyView({ facultyId }: FacultyViewProps) {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<any>(DEFAULT_FACULTY_DATA);
   const [activeTab, setActiveTab] = useState<'routine' | 'constraints' | 'marketplace'>('routine');
   
   // Marketplace State
@@ -59,7 +60,7 @@ export default function FacultyView({ facultyId }: FacultyViewProps) {
     // In a real app this would POST to the backend to mark the slot as FREE for the recovery engine.
   };
 
-  if (!data) return <div className="p-8 text-slate-500 flex items-center"><Clock className="mr-2 h-4 w-4 animate-spin"/> Loading Dashboard...</div>;
+  if (!data) return null;
 
   return (
     <div className="space-y-6">

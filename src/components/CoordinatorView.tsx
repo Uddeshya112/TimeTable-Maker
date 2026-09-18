@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src
 import { Button } from "@/src/components/ui/button";
 import { CheckCircle2, Clock, AlertTriangle, CalendarRange, Bell, BookOpen, AlertCircle, TrendingUp, TrendingDown, Info, Settings, Wand2, Database, Search, UserCheck, Play, Edit2, Trash2 } from "lucide-react";
 import { Badge } from "@/src/components/ui/badge";
+import { DEFAULT_COORDINATOR_DATA, DEFAULT_SETUP_DATA } from "@/src/lib/defaultData";
 
 export default function CoordinatorView() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<any>(DEFAULT_COORDINATOR_DATA);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'timetable' | 'syllabus' | 'inbox' | 'generator' | 'simulator' | 'setup'>('dashboard');
   const [isGenerating, setIsGenerating] = useState(false);
   const [substitutes, setSubstitutes] = useState<any[]>([]);
@@ -16,7 +17,7 @@ export default function CoordinatorView() {
   const [simulationResult, setSimulationResult] = useState<any>(null);
 
   // Setup Data State
-  const [setupData, setSetupData] = useState<any>(null);
+  const [setupData, setSetupData] = useState<any>(DEFAULT_SETUP_DATA);
   const [newRoom, setNewRoom] = useState({ name: '', capacity: '', type: 'Lecture' });
   const [newCourse, setNewCourse] = useState({ name: '', hours: '', type: 'Lecture' });
   const [newFaculty, setNewFaculty] = useState({ name: '', department: '', subjects: [] as string[] });
@@ -146,7 +147,8 @@ export default function CoordinatorView() {
   };
 
 
-  if (!data) return <div className="p-8 text-slate-500 flex items-center"><Clock className="mr-2 h-4 w-4 animate-spin"/> Loading Platform Data...</div>;
+  // Never block the UI; instantaneous render
+  if (!data) return null;
 
   return (
     <div className="space-y-6">
