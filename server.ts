@@ -21,25 +21,29 @@ async function startServer() {
   let setupRooms: any[] = [
     { id: "r1", name: "Room 101", capacity: 60, type: "Lecture" },
     { id: "r2", name: "Room 204", capacity: 40, type: "Lecture" },
-    { id: "r3", name: "Lab 1", capacity: 30, type: "Laboratory" }
+    { id: "r3", name: "Lab 1", capacity: 30, type: "Laboratory" },
+    { id: "r4", name: "Lab 2", capacity: 30, type: "Laboratory" }
   ];
   let setupCourses: any[] = [
     { id: "c1", name: "DBMS", hours: 4, type: "Lecture" },
     { id: "c2", name: "OS", hours: 3, type: "Lecture" },
-    { id: "c3", name: "Mathematics", hours: 4, type: "Lecture" }
+    { id: "c3", name: "Mathematics", hours: 4, type: "Lecture" },
+    { id: "c4", name: "DBMS Lab", hours: 2, type: "Laboratory" },
+    { id: "c5", name: "OS Lab", hours: 2, type: "Laboratory" }
   ];
   let setupFaculty: any[] = [
-    { id: "sharma", name: "Prof. Sharma", department: "Computer Science" },
-    { id: "gupta", name: "Prof. Gupta", department: "Computer Science" },
-    { id: "admin", name: "Dr. Admin", department: "Administration" }
+    { id: "sharma", name: "Prof. Sharma", department: "Computer Science", subjects: ["c1", "c4"] },
+    { id: "gupta", name: "Prof. Gupta", department: "Computer Science", subjects: ["c2", "c5"] },
+    { id: "math_prof", name: "Dr. Rao", department: "Mathematics", subjects: ["c3"] },
+    { id: "admin", name: "Dr. Admin", department: "Administration", subjects: [] }
   ];
   
   let setupBatches: any[] = [
-    { id: "b1", department: "Computer Science", totalStudents: 1000, sections: 16 }
+    { id: "b1", groupNumber: "2C4", department: "Computer Science", totalStudents: 60, subgroups: 2, subgroupNames: ["2C4-SG1", "2C4-SG2"] }
   ];
 
   // Initial Timetable
-  let timetable = [
+  let timetable: any[] = [
     { id: "t1", day: "Monday", time: "08:00 - 09:00", subject: "DBMS", section: "CSE-A", facultyId: "sharma", room: "204", status: "cancelled" },
     { id: "t2", day: "Monday", time: "09:00 - 10:00", subject: "FREE", section: "CSE-A", facultyId: null, room: null, status: "planned" },
     { id: "t3", day: "Thursday", time: "10:00 - 11:00", subject: "Mathematics", section: "CSE-A", facultyId: "math_prof", room: "101", status: "planned" },
@@ -93,92 +97,145 @@ async function startServer() {
   // --- API ROUTES ---
 
   app.post("/api/generate-timetable", (req, res) => {
-    const { targetGroup } = req.body || {};
-    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-    const timeSlots = ["09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00", "13:00 - 14:00", "14:00 - 15:00", "15:00 - 16:00"];
+    const { targetGroup, targetSubgroup, setupData: clientSetup } = req.body || {};
     
-    // If regenerating for a specific group, keep the others
+    // Sync setup data if passed from client
+    if (clientSetup) {
+      if (Array.isArray(clientSetup.rooms) && clientSetup.rooms.length > 0) setupRooms = clientSetup.rooms;
+      if (Array.isArray(clientSetup.courses) && clientSetup.courses.length > 0) setupCourses = clientSetup.courses;
+      if (Array.isArray(clientSetup.faculty) && clientSetup.faculty.length > 0) setupFaculty = clientSetup.faculty;
+      if (Array.isArray(clientSetup.batches) && clientSetup.batches.length > 0) setupBatches = clientSetup.batches;
+    }
+
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+    const timeSlots = ["08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00", "13:00 - 14:00", "14:00 - 15:00", "15:00 - 16:00"];
+    
+    const targetGroupStr = (targetGroup || "").trim().toLowerCase();
+
+    // If regenerating for a specific group, retain other groups' classes
     let newTimetable: any[] = [];
-    if (targetGroup) {
-        newTimetable = timetable.filter(t => {
-            // Remove old entries for this group
-            const batch = setupBatches.find(b => (b.groupNumber || b.department) === targetGroup);
-            const subgroups = batch?.subgroupNames || [];
-            const isTarget = t.section === targetGroup || subgroups.includes(t.section) || (t.section && t.section.startsWith(`${targetGroup}-SG`));
-            return !isTarget;
-        });
+    if (targetGroupStr) {
+      newTimetable = timetable.filter(t => {
+        const sec = (t.section || "").trim().toLowerCase();
+        const bch = (t.batch || "").trim().toLowerCase();
+        const isTarget = sec === targetGroupStr || bch === targetGroupStr || sec.startsWith(`${targetGroupStr}-`) || sec.startsWith(`${targetGroupStr}_`);
+        return !isTarget;
+      });
     }
 
     let idCounter = Date.now();
 
-    const batchesToProcess = targetGroup 
-        ? setupBatches.filter(b => (b.groupNumber || b.department) === targetGroup)
-        : setupBatches;
+    let batchesToProcess = targetGroupStr 
+      ? setupBatches.filter(b => (b.groupNumber || b.department || "").trim().toLowerCase() === targetGroupStr)
+      : setupBatches;
+
+    // Safety fallback: if target group wasn't found in setupBatches, auto-register it
+    if (batchesToProcess.length === 0 && targetGroupStr) {
+      const dynamicBatch = {
+        id: `b_${idCounter}`,
+        groupNumber: targetGroup,
+        department: targetGroup,
+        totalStudents: 60,
+        subgroups: 2,
+        subgroupNames: [`${targetGroup}-SG1`, `${targetGroup}-SG2`]
+      };
+      batchesToProcess = [dynamicBatch];
+      setupBatches.push(dynamicBatch);
+    }
 
     batchesToProcess.forEach(batch => {
-
-      const groupName = batch.groupNumber ? batch.groupNumber.toUpperCase() : batch.department.substring(0, 7).toUpperCase();
-      const numSubgroups = Number(batch.subgroups) || Number(batch.sections) || 1;
+      const groupName = (batch.groupNumber || batch.department || "General").trim();
+      const numSubgroups = Math.max(1, Number(batch.subgroups) || Number(batch.sections) || 1);
       
-      const customNames = batch.subgroupNames || [];
+      const subgroupNames: string[] = (batch.subgroupNames && batch.subgroupNames.length > 0)
+        ? batch.subgroupNames
+        : Array.from({ length: numSubgroups }, (_, i) => `${groupName}-SG${i + 1}`);
 
       setupCourses.forEach(course => {
-        const isLab = course.type === 'Laboratory';
-        const entitiesToSchedule = isLab 
-          ? Array.from({length: numSubgroups}, (_, i) => customNames[i] || `${groupName}-SG${i+1}`)
-          : [groupName];
+        const isLabOrPractical = 
+          course.type === 'Laboratory' || 
+          course.type === 'Practical' || 
+          course.type === 'Tutorial' ||
+          (course.name && course.name.toLowerCase().includes('lab'));
 
-        entitiesToSchedule.forEach(sectionName => {
+        // If practical or lab: schedule each individual subgroup separately!
+        // If lecture: schedule for the common batch section attended by all subgroups
+        const entitiesToSchedule: { name: string; isSubgroup: boolean; requiredHours: number }[] = isLabOrPractical
+          ? subgroupNames.map(sg => ({ name: sg, isSubgroup: true, requiredHours: Math.min(course.hours || 2, 2) }))
+          : [{ name: groupName, isSubgroup: false, requiredHours: Math.min(course.hours || 3, 4) }];
+
+        entitiesToSchedule.forEach(({ name: sectionName, isSubgroup, requiredHours }) => {
           let hoursAssigned = 0;
           
-          // Find faculty who can teach this subject
-          let eligibleFaculty = setupFaculty.filter(f => f.subjects && f.subjects.includes(course.id));
+          // Eligible faculty for this course
+          let eligibleFaculty = setupFaculty.filter(f => f.subjects && (f.subjects.includes(course.id) || f.subjects.includes(course.name)));
           if (eligibleFaculty.length === 0) {
-            eligibleFaculty = setupFaculty; // fallback
+            eligibleFaculty = setupFaculty;
           }
-          const fac = eligibleFaculty.length > 0 ? eligibleFaculty[idCounter % eligibleFaculty.length] : { id: 'unknown', name: 'Unknown' };
-          
+          const fac = eligibleFaculty.length > 0 
+            ? eligibleFaculty[idCounter % eligibleFaculty.length] 
+            : { id: 'faculty_1', name: 'Faculty' };
+
           let attempts = 0;
-          while (hoursAssigned < course.hours && attempts < 1000) {
+          while (hoursAssigned < requiredHours && attempts < 600) {
             attempts++;
             const randDay = days[Math.floor(Math.random() * days.length)];
             const randSlot = timeSlots[Math.floor(Math.random() * timeSlots.length)];
-            
-            // Check clash
+
+            // Check clash:
             const clash = newTimetable.some(t => {
               if (t.day !== randDay || t.time !== randSlot) return false;
-              if (t.facultyId === fac.id) return true; // Teacher clash
-              
-              // Group / Subgroup clash
-              const isGroup = sectionName === groupName;
-              const isSubgroup = customNames.includes(sectionName) || sectionName.startsWith(`${groupName}-SG`);
-              
-              if (t.section === sectionName) return true;
-              if (isGroup && (customNames.includes(t.section) || t.section.startsWith(`${groupName}-SG`))) return true;
-              if (isSubgroup && t.section === groupName) return true;
-              
+              // Faculty clash: teacher cannot teach two classes at once
+              if (t.facultyId && fac.id && t.facultyId === fac.id) return true;
+
+              const tSec = (t.section || "").trim().toLowerCase();
+              const currSec = sectionName.trim().toLowerCase();
+              const currGroup = groupName.trim().toLowerCase();
+
+              // Exact section clash: cannot double-book the same section/subgroup
+              if (tSec === currSec) return true;
+
+              // If current session is for entire batch, no subgroup of this batch can have a class
+              if (!isSubgroup && (subgroupNames.some(s => s.trim().toLowerCase() === tSec) || tSec.startsWith(`${currGroup}-`))) {
+                return true;
+              }
+
+              // If current session is for a subgroup, the entire batch cannot have a common lecture at the same time
+              if (isSubgroup && tSec === currGroup) {
+                return true;
+              }
+
+              // Note: Different subgroups of the same batch CAN have different labs concurrently in different rooms!
               return false;
             });
-            
+
             if (!clash) {
-              const usedRoomsThisSlot = newTimetable.filter(t => t.day === randDay && t.time === randSlot).map(t => t.room);
-              let freeRooms: any[] = setupRooms.filter((r: any) => !usedRoomsThisSlot.includes(r.name));
-              
-              const requiredType = course.type === 'Laboratory' ? 'Laboratory' : (course.type || 'Lecture');
-              const matchedTypeRooms = freeRooms.filter(r => r.type === requiredType);
+              const usedRoomsThisSlot = newTimetable
+                .filter(t => t.day === randDay && t.time === randSlot)
+                .map(t => (t.room || "").trim().toLowerCase());
+
+              let freeRooms = setupRooms.filter(r => !usedRoomsThisSlot.includes((r.name || "").trim().toLowerCase()));
+
+              const desiredType = isLabOrPractical ? 'Laboratory' : (course.type || 'Lecture');
+              const matchedTypeRooms = freeRooms.filter(r => (r.type || "").toLowerCase() === desiredType.toLowerCase());
               if (matchedTypeRooms.length > 0) {
                 freeRooms = matchedTypeRooms;
               }
-              
+
               if (freeRooms.length > 0) {
+                const chosenRoom = freeRooms[Math.floor(Math.random() * freeRooms.length)];
                 newTimetable.push({
                   id: `gen_${idCounter++}`,
                   day: randDay,
                   time: randSlot,
                   subject: course.name,
                   section: sectionName,
+                  batch: groupName,
+                  subgroup: isSubgroup ? sectionName : 'all',
+                  isSubgroup,
+                  courseType: isLabOrPractical ? 'Laboratory' : (course.type || 'Lecture'),
                   facultyId: fac.id,
-                  room: freeRooms[0].name,
+                  room: chosenRoom.name,
                   status: "planned"
                 });
                 hoursAssigned++;
@@ -190,7 +247,7 @@ async function startServer() {
     });
 
     timetable = newTimetable;
-    res.json({ success: true, count: newTimetable.length });
+    res.json({ success: true, count: newTimetable.length, timetable: newTimetable });
   });
 
   app.get("/api/setup-data", (req, res) => {
@@ -204,11 +261,13 @@ async function startServer() {
 
   app.post("/api/setup-data", (req, res) => {
     const { type, payload } = req.body;
-    if (type === 'room') setupRooms.push({ id: `r_${Date.now()}`, ...payload });
-    if (type === 'course') setupCourses.push({ id: `c_${Date.now()}`, ...payload });
-    if (type === 'faculty') setupFaculty.push({ id: `f_${Date.now()}`, ...payload });
-    if (type === 'batch') setupBatches.push({ id: `b_${Date.now()}`, ...payload });
-    res.json({ success: true });
+    if (!payload) return res.status(400).json({ error: "Missing payload" });
+    const newItem = { id: payload.id || `${type.slice(0, 1)}_${Date.now()}`, ...payload };
+    if (type === 'room') setupRooms.push(newItem);
+    if (type === 'course') setupCourses.push(newItem);
+    if (type === 'faculty') setupFaculty.push(newItem);
+    if (type === 'batch') setupBatches.push(newItem);
+    res.json({ success: true, item: newItem });
   });
 
   app.put("/api/setup-data/:type/:id", (req, res) => {
@@ -387,8 +446,12 @@ async function startServer() {
   });
 
   app.get("/api/dashboard/student/:section", (req, res) => {
-    // Note: section is hardcoded to CSE-A based on the login mock for simplicity
-    const routine = timetable.filter(t => t.section === "CSE-A");
+    const target = (req.params.section || "").trim().toLowerCase();
+    const routine = timetable.filter(t => {
+      const sec = (t.section || "").trim().toLowerCase();
+      const bch = (t.batch || "").trim().toLowerCase();
+      return sec === target || bch === target || sec.startsWith(`${target}-`) || sec.startsWith(`${target}_`);
+    });
     res.json({ routine });
   });
 

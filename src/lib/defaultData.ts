@@ -30,20 +30,24 @@ export const DEFAULT_SETUP_DATA = {
   rooms: [
     { id: "r1", name: "Room 101", capacity: 60, type: "Lecture" },
     { id: "r2", name: "Room 204", capacity: 40, type: "Lecture" },
-    { id: "r3", name: "Lab 1", capacity: 30, type: "Laboratory" }
+    { id: "r3", name: "Lab 1", capacity: 30, type: "Laboratory" },
+    { id: "r4", name: "Lab 2", capacity: 30, type: "Laboratory" }
   ],
   courses: [
     { id: "c1", name: "DBMS", hours: 4, type: "Lecture" },
     { id: "c2", name: "OS", hours: 3, type: "Lecture" },
-    { id: "c3", name: "Mathematics", hours: 4, type: "Lecture" }
+    { id: "c3", name: "Mathematics", hours: 4, type: "Lecture" },
+    { id: "c4", name: "DBMS Lab", hours: 2, type: "Laboratory" },
+    { id: "c5", name: "OS Lab", hours: 2, type: "Laboratory" }
   ],
   faculty: [
-    { id: "sharma", name: "Prof. Sharma", department: "Computer Science" },
-    { id: "gupta", name: "Prof. Gupta", department: "Computer Science" },
-    { id: "admin", name: "Dr. Admin", department: "Administration" }
+    { id: "sharma", name: "Prof. Sharma", department: "Computer Science", subjects: ["c1", "c4"] },
+    { id: "gupta", name: "Prof. Gupta", department: "Computer Science", subjects: ["c2", "c5"] },
+    { id: "math_prof", name: "Dr. Rao", department: "Mathematics", subjects: ["c3"] },
+    { id: "admin", name: "Dr. Admin", department: "Administration", subjects: [] }
   ],
   batches: [
-    { id: "b1", department: "Computer Science", totalStudents: 1000, sections: 16 }
+    { id: "b1", groupNumber: "2C4", department: "Computer Science", totalStudents: 60, subgroups: 2, subgroupNames: ["2C4-SG1", "2C4-SG2"] }
   ]
 };
 
