@@ -10,7 +10,7 @@ async function startServer() {
 
   // --- IN-MEMORY DATABASE ENGINE ---
   // Designed to be easily ported to Vercel Serverless Functions + a real DB later
-  const users = [
+  let users: any[] = [
     { id: "u1", email: "admin@college.edu", password: "password", role: "coordinator", name: "Dr. Admin" },
     { id: "sharma", email: "sharma@college.edu", password: "password", role: "faculty", name: "Prof. Sharma" },
     { id: "gupta", email: "gupta@college.edu", password: "password", role: "faculty", name: "Prof. Gupta" },
@@ -244,12 +244,57 @@ async function startServer() {
 
   app.post("/api/auth/login", (req, res) => {
     const { email, password } = req.body;
-    const user = users.find(u => u.email === email && u.password === password);
+    const user = users.find(u => u.email.toLowerCase() === (email || "").trim().toLowerCase() && u.password === password);
     if (user) {
       res.json({ success: true, token: `token_${user.id}`, user });
     } else {
-      res.status(401).json({ success: false, message: "Invalid credentials" });
+      res.status(401).json({ success: false, message: "Invalid email or password" });
     }
+  });
+
+  app.post("/api/auth/register", (req, res) => {
+    const { name, email, password, role, department, batchId } = req.body;
+
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ success: false, message: "Name, email, password, and role are required." });
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+    const existing = users.find(u => u.email.toLowerCase() === trimmedEmail);
+    if (existing) {
+      return res.status(409).json({ success: false, message: "An account with this email already exists." });
+    }
+
+    const newId = `user_${Date.now()}`;
+    const newUser: any = {
+      id: newId,
+      name: name.trim(),
+      email: trimmedEmail,
+      password,
+      role: role.toLowerCase(), // 'student' | 'faculty' | 'coordinator'
+      department: department || "Computer Science",
+      batchId: batchId || (role.toLowerCase() === "student" ? "CSE-A" : undefined)
+    };
+
+    users.push(newUser);
+
+    // If registered as faculty, also register into setupFaculty so they appear in coordinator schedules!
+    if (newUser.role === "faculty") {
+      setupFaculty.push({
+        id: newId,
+        name: newUser.name,
+        email: newUser.email,
+        department: newUser.department,
+        maxHours: 16,
+        color: "#6366f1"
+      });
+    }
+
+    res.json({
+      success: true,
+      token: `token_${newUser.id}`,
+      user: newUser
+    });
   });
 
   // PDF Page 26: Free-Slot Marketplace
